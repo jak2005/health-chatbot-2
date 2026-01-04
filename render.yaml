@@ -16,12 +16,6 @@ services:
         value: ""  # Optional - leave empty to disable research feature
       - key: FLASK_SECRET_KEY
         generateValue: true
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_NUMBER
-        sync: false
     healthCheckPath: /health
 
   # Streamlit Frontend Service

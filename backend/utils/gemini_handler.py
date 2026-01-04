@@ -6,7 +6,6 @@ from utils.query_decomposer import QueryDecomposer
 from utils.search_controller import SearchController
 from utils.response_generator import ResponseGenerator
 from utils.context_manager import ContextManager
-from utils.user_profile_manager import UserProfileManager
 
 class GeminiHandler:
     def __init__(self, config):
@@ -19,32 +18,19 @@ class GeminiHandler:
         self.response_generator = ResponseGenerator(config.GOOGLE_API_KEY)
         self.rag_handler = None
         self.context_manager = ContextManager()
-        self.user_profile_manager = None
         
         # Initialize chat sessions
         self.chat_sessions: Dict[str, any] = {}
 
     def set_managers(self, db_manager):
-        """Set RAG handler and User Profile Manager"""
+        """Set RAG handler"""
         self.rag_handler = RAGHandler(db_manager)
-        self.user_profile_manager = UserProfileManager(db_manager)
 
-    async def get_response(
-        self, 
-        user_id: str, 
-        message: str, 
-        is_whatsapp: bool = False
-    ) -> str:
+    async def get_response(self, user_id: str, message: str) -> str:
         """Process user message and generate response"""
         try:
             print(f"\n=== Processing Message for User: {user_id} ===")
             print(f"Original Message: {message}")
-            print(f"Platform: {'WhatsApp' if is_whatsapp else 'Streamlit'}")
-            
-            # Get user profile for WhatsApp users
-            user_profile = None
-            if is_whatsapp and self.user_profile_manager:
-                user_profile = await self.user_profile_manager.get_user_profile(user_id)
             
             # Get session context
             context = self.context_manager.get_context(user_id)
@@ -67,10 +53,7 @@ class GeminiHandler:
             rag_context = ""
             if self.rag_handler:
                 print("\n=== Getting RAG Context ===")
-                rag_context = self.rag_handler.get_relevant_context(
-                    message,
-                    user_profile=user_profile
-                )
+                rag_context = self.rag_handler.get_relevant_context(message)
             
             # Step 4: Generate comprehensive response
             print("\n=== Generating Response ===")
@@ -78,21 +61,11 @@ class GeminiHandler:
                 original_query=message,
                 sub_queries=sub_queries,
                 research_results=research_results,
-                rag_context=rag_context,
-                user_profile=user_profile
+                rag_context=rag_context
             )
             
-            # Step 5: Update context and user profile
+            # Step 5: Update context
             self.context_manager.update_context(user_id, message, response)
-            
-            if is_whatsapp and self.user_profile_manager:
-                context_summary = self.context_manager.get_context_summary(user_id)
-                await self.user_profile_manager.update_profile(
-                    user_id,
-                    message,
-                    response,
-                    context_summary
-                )
             
             print("\n=== Response Generation Complete ===")
             return response
@@ -106,7 +79,3 @@ class GeminiHandler:
     def clear_context(self, user_id: str):
         """Clear context for a user"""
         self.context_manager.clear_context(user_id)
-
-
-
-

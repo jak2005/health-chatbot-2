@@ -2,7 +2,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils.gemini_handler import GeminiHandler
-from utils.twilio_handler import TwilioHandler
 from database.chromadb_manager import ChromaDBManager
 from services.health_tips import HealthTipsService
 from config import Config
@@ -17,7 +16,6 @@ config = Config()
 
 # Initialize handlers
 gemini_handler = GeminiHandler(config)
-twilio_handler = TwilioHandler()
 db_manager = ChromaDBManager(config.CHROMA_DB_PATH)
 
 # Initialize services
@@ -40,7 +38,6 @@ def health_check():
         "message": "Health chatbot API is running",
         "features": {
             "chat": True,
-            "whatsapp": config.WHATSAPP_ENABLED,
             "tips": True,
             "feedback": True
         }
@@ -60,8 +57,7 @@ async def chat():
         # Get response from Gemini
         response = await gemini_handler.get_response(
             user_id=user_id,
-            message=message,
-            is_whatsapp=False
+            message=message
         )
         
         # Store chat history
@@ -75,51 +71,6 @@ async def chat():
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
         return jsonify({"error": "Failed to process chat message"}), 500
-
-@app.route('/whatsapp/webhook', methods=['POST'])
-async def whatsapp_webhook():
-    """Handle WhatsApp messages"""
-    try:
-        # Get incoming WhatsApp message details
-        incoming_msg = request.values.get('Body', '').strip()
-        sender = request.values.get('From', '').strip()
-        
-        print(f"Received WhatsApp message: {incoming_msg} from {sender}")
-        
-        if not incoming_msg:
-            return twilio_handler.create_response("Message is required")
-
-        # Get response from Gemini
-        response = await gemini_handler.get_response(
-            user_id=sender,
-            message=incoming_msg,
-            is_whatsapp=True
-        )
-        
-        # Create and return WhatsApp response
-        return twilio_handler.create_response(response)
-
-    except Exception as e:
-        print(f"Error in WhatsApp webhook: {str(e)}")
-        return twilio_handler.create_response(config.DEFAULT_RESPONSE)
-
-@app.route('/whatsapp/status', methods=['POST'])
-def whatsapp_status():
-    """Handle WhatsApp message status updates"""
-    try:
-        message_sid = request.values.get('MessageSid', '')
-        message_status = request.values.get('MessageStatus', '')
-        
-        print(f"Message {message_sid} status: {message_status}")
-        
-        return jsonify({
-            "status": "success",
-            "message": f"Status update received: {message_status}"
-        })
-        
-    except Exception as e:
-        print(f"Error in status webhook: {str(e)}")
-        return jsonify({"error": "Failed to process status update"}), 500
 
 @app.route('/tips/random', methods=['GET'])
 def get_random_tip():
