@@ -6,6 +6,12 @@ import asyncio
 
 class SearchController:
     def __init__(self, api_key: str):
+        # Handle missing API key gracefully
+        if not api_key:
+            self.client = None
+            self.model = None
+            return
+            
         # Use Groq if the key starts with gsk_
         base_url = "https://api.groq.com/openai/v1" if api_key.startswith("gsk_") else None
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
@@ -13,6 +19,11 @@ class SearchController:
     
     async def search_research(self, queries: List[str]) -> Dict[str, str]:
         """Search for research papers and medical data"""
+        # Return empty if client not initialized (no API key)
+        if not self.client:
+            print("SearchController: No API key configured, skipping research")
+            return {}
+            
         results = {}
         
         # Process queries concurrently
