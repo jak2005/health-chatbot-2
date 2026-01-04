@@ -10,8 +10,7 @@ google-generativeai==0.3.2
 openai==1.6.1
 
 # Database
-chromadb==0.4.22
-sentence-transformers==2.2.2
+chromadb==0.5.0
 
 # WhatsApp integration
 twilio==8.10.0

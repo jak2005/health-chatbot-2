@@ -1,5 +1,4 @@
 import chromadb
-from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 import os
 from datetime import datetime
@@ -11,13 +10,11 @@ class ChromaDBManager:
         # Ensure directory exists
         os.makedirs(persist_directory, exist_ok=True)
         
-        # Initialize embedding function
-        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction()
+        # Initialize embedding function (use default to avoid heavy downloads)
+        self.embedding_function = embedding_functions.DefaultEmbeddingFunction()
         
-        self.client = chromadb.Client(Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory=persist_directory
-        ))
+        # Use PersistentClient for newer ChromaDB versions
+        self.client = chromadb.PersistentClient(path=persist_directory)
         
         # Create collections with embedding function
         self.health_tips = self.client.get_or_create_collection(
@@ -172,7 +169,7 @@ class ChromaDBManager:
                 metadatas=[{"category": category}],
                 ids=[tip_id]
             )
-            self.client.persist()
+            # Auto-persisted with PersistentClient
         except Exception as e:
             print(f"Error adding health tip: {str(e)}")
 
@@ -196,7 +193,7 @@ class ChromaDBManager:
                     metadatas=[{"category": category, "type": "faq"}],
                     ids=[faq_id]
                 )
-            self.client.persist()
+            # Auto-persisted with PersistentClient
         except Exception as e:
             print(f"Error adding FAQ: {str(e)}")
 
@@ -208,7 +205,7 @@ class ChromaDBManager:
                 metadatas=[{"name": name, "category": category, "price": price}],
                 ids=[product_id]
             )
-            self.client.persist()
+            # Auto-persisted with PersistentClient
         except Exception as e:
             print(f"Error adding product: {str(e)}")
 
@@ -224,7 +221,7 @@ class ChromaDBManager:
                 }],
                 ids=[chat_id]
             )
-            self.client.persist()
+            # Auto-persisted with PersistentClient
             return True
         except Exception as e:
             print(f"Error storing chat: {str(e)}")
@@ -243,7 +240,7 @@ class ChromaDBManager:
                 }],
                 ids=[feedback_id]
             )
-            self.client.persist()
+            # Auto-persisted with PersistentClient
             return True
         except Exception as e:
             print(f"Error storing feedback: {str(e)}")
