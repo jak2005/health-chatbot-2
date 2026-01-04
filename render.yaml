@@ -13,7 +13,7 @@ services:
       - key: GOOGLE_API_KEY
         sync: false
       - key: SONAR_API_KEY
-        sync: false
+        value: ""  # Optional - leave empty to disable research feature
       - key: FLASK_SECRET_KEY
         generateValue: true
       - key: TWILIO_ACCOUNT_SID

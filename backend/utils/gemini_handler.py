@@ -55,11 +55,13 @@ class GeminiHandler:
             needs_research = decomposition_result['needs_research']
             sub_queries = decomposition_result['sub_queries']
             
-            # Step 2: Get research results if needed
+            # Step 2: Get research results if needed (ONLY if Sonar API is configured)
             research_results = {}
-            if needs_research and sub_queries:
+            if needs_research and sub_queries and self.config.SONAR_API_KEY:
                 print("\n=== Conducting Research ===")
                 research_results = await self.search_controller.search_research(sub_queries)
+            elif needs_research and not self.config.SONAR_API_KEY:
+                print("\n=== Skipping Research (No SONAR_API_KEY configured) ===")
             
             # Step 3: Get RAG context
             rag_context = ""
